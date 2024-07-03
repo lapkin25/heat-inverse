@@ -10,8 +10,7 @@ global kappa_a
 global alpha
 global beta
 global gamma
-global theta_b1
-global theta_b2
+global theta_b
 global L
 global K
 
@@ -22,8 +21,7 @@ kappa_a = 0.01;
 alpha = 3.333333333;
 beta = 10;
 gamma = 0.3;
-theta_b1 = 0.4;
-theta_b2 = 0.4;
+theta_b = 0.4;
 L = 50;
 
 # размер расчетной сетки
@@ -95,8 +93,7 @@ function [r_vals, theta] = calc_heat ()
   global alpha
   global beta
   global gamma
-  global theta_b1
-  global theta_b2
+  global theta_b
   global L
   global K
   global f_fun
@@ -123,7 +120,7 @@ function [r_vals, theta] = calc_heat ()
   endfor
 
   data.b = [ beta, beta ; gamma, gamma ];
-  data.w = [ beta * theta_b1, beta * theta_b2 ; gamma * theta_b1 ^ 4, gamma * theta_b2 ^ 4 ];
+  data.w = [ beta * theta_b, beta * theta_b ; gamma * theta_b ^ 4, gamma * theta_b ^ 4 ];
 
   data.G = [ ];
 
@@ -313,22 +310,21 @@ function [A, rhs] = calc_linear_system ()
     A(:, eq_ind) = s_vals;
   endfor
 
- # data.g = zeros(N, grid_info.nodes);
- # data.w = [ beta * theta_b, beta * theta_b ];
+  data.g = zeros(N, grid_info.nodes);
+  data.w = [ beta * theta_b, beta * theta_b ];
 
- # guess = zeros(N, grid_info.nodes);
- # tol = 1e-4;
- # sol = solve_bvp1d(grid_info, data, guess, tol);
- # eta = sol(1, :);
+  guess = zeros(N, grid_info.nodes);
+  tol = 1e-4;
+  sol = solve_bvp1d(grid_info, data, guess, tol);
+  eta = sol(1, :);
 
- # s_vals = zeros(num_sources, 1);
- # for j = 1:num_sources
- #   # вычисляем интеграл от f_fun{j} * eta
- #   s_vals(j) = trapz(xgrid, arrayfun(f_fun{j}, xgrid) .* eta);
- # endfor
+  s_vals = zeros(num_sources, 1);
+  for j = 1:num_sources
+    # вычисляем интеграл от f_fun{j} * eta
+    s_vals(j) = trapz(xgrid, arrayfun(f_fun{j}, xgrid) .* eta);
+  endfor
 
- # rhs = s_vals;
- rhs = zeros(num_sources, 1);
+  rhs = s_vals;
 endfunction
 
 
@@ -399,10 +395,10 @@ endfunction
 [B, rhs] = calc_linear_system();
 
 
-s1_min = -5;
-s1_max = 5;
-s2_min = -5;
-s2_max = 5;
+s1_min = 0;
+s1_max = 10;
+s2_min = 0;
+s2_max = 10;
 sn = 15;
 s1grid = linspace(s1_min, s1_max, sn);
 s2grid = linspace(s2_min, s2_max, sn);
