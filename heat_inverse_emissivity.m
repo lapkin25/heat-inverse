@@ -25,11 +25,11 @@ b = 18.7;
 kappa_a = 0.01;
 alpha = 3.333333333;
 beta = 10;
-theta_b1 = 0.6;  # попробовать другие значения
-theta_b2 = 0.6;
-theta_init = 0.4;
+theta_b1 = 0.3;  # попробовать другие значения
+theta_b2 = 0.8;
+theta_init = 1;
 L = 50;
-T = 1;
+T = 30;
 
 # коэффициент отражения излучения
 gamma1 = 0.3;
@@ -115,10 +115,12 @@ function [r_vals, theta, phi] = calc_heat ()
   endfor
 
   r_vals = zeros(1, 2);
-  tgrid = linspace(0, T, tnum + 1);
+  #tgrid = linspace(0, T, tnum + 1);
   # вычисляем интеграл от theta
-  r_vals(1) = trapz(tgrid, theta(1, :));
-  r_vals(2) = trapz(tgrid, theta(K + 1, :));
+  #r_vals(1) = trapz(tgrid, theta(1, :));
+  #r_vals(2) = trapz(tgrid, theta(K + 1, :));
+  r_vals(1) = phi(1, tnum + 1);
+  r_vals(2) = phi(K + 1, tnum + 1);
 endfunction
 
 #{
@@ -211,8 +213,9 @@ endfunction
 
 [r_vals, theta, phi] = calc_heat();
 r_vals
+#r_vals / T
 
-#{
+
 xgrid = linspace(0, L, K + 1);
 figure
 plot(xgrid, theta(:, tnum + 1), "r", "linewidth", 2);
@@ -222,7 +225,7 @@ figure
 plot(xgrid, phi(:, tnum + 1), "b", "linewidth", 2);
 xlabel("x");
 ylabel("phi");
-#}
+
 
 
 #xgrid = linspace(0, L, 150);
@@ -261,7 +264,6 @@ endfunction
 
 #[qq, fval, info] = fsolve (@opt_f, q, optimset ("jacobian", "on"))
 
-
 gamma_min = 0.01;
 gamma_max = 0.5;
 gamma_n = 5;
@@ -275,8 +277,8 @@ for gamma1_ind = 1:gamma_n
     gamma1 = gamma1_val;
     gamma2 = gamma2_val;
     [r_vals, theta, phi] = calc_heat();
-    func_vals1(gamma1_ind, gamma2_ind) = r_vals(1);
-    func_vals2(gamma1_ind, gamma2_ind) = r_vals(2);
+    func_vals1(gamma1_ind, gamma2_ind) = r_vals(1);  # / T;
+    func_vals2(gamma1_ind, gamma2_ind) = r_vals(2);  # / T;
   endfor
 endfor
 figure
