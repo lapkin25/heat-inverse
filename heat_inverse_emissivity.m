@@ -36,8 +36,8 @@ gamma1 = 0.3;
 gamma2 = 0.5;
 
 # размер расчетной сетки
-K = 30;
-tnum = 20;
+K = 50;
+tnum = 30;
 
 
 # известные средние значения температуры на каждом конце
@@ -266,7 +266,7 @@ endfunction
 
 gamma_min = 0.01;
 gamma_max = 0.5;
-gamma_n = 5;
+gamma_n = 10;
 gamma_grid = linspace(gamma_min, gamma_max, gamma_n);
 func_vals1 = zeros(gamma_n);
 func_vals2 = zeros(gamma_n);
@@ -285,4 +285,5 @@ figure
 contour(gamma_grid, gamma_grid, func_vals1', 'k', 'ShowText', 'on')
 hold on
 contour(gamma_grid, gamma_grid, func_vals2', 'k', '--', 'ShowText', 'on')
-
+xlabel("\gamma_1")
+ylabel("\gamma_2")
