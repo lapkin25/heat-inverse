@@ -27,7 +27,7 @@ theta_b2 = 0.8;
 L = 50;
 
 # размер расчетной сетки
-K = 30;
+K = 70;
 
 # источники тепла
 global f_fun
@@ -43,7 +43,7 @@ q = zeros(num_sources);
 
 # известные средние значения температуры по каждому источнику
 global r
-r = [4, 3];
+r = [1.8, 1.8];
 
 # источник тепла
 function ret = g_fun (x)
@@ -71,6 +71,7 @@ function ret = f_cos(a, b, x)
 endfunction
 
 function ret = f1 (x)
+  #ret = f_cos(10, 30, x); - 1
   ret = f_cos(10, 20, x);
 #  if (x >= 10 && x <= 20)
 #    ret = 1.0;
@@ -80,7 +81,8 @@ function ret = f1 (x)
 endfunction
 
 function ret = f2 (x)
-  ret = f_cos(30, 40, x);
+  #ret = f_cos(30, 45, x); - 1
+  ret = f_cos(35, 45, x);
 #ret = f_cos(45, 50, x);
 #  if (x >= 30 && x <= 40)
 #    ret = 1.0;
@@ -90,12 +92,14 @@ function ret = f2 (x)
 endfunction
 
 function ret = h1 (x)
-  ret = f_cos(40, 45, x);
+  ret = f_cos(25, 30, x);
+  #ret = f_cos(20, 35, x); - 2
   #ret = f1(x);
 endfunction
 
 function ret = h2 (x)
-  ret = f_cos(20, 30, x);
+  ret = f_cos(30, 35, x);
+  # ret = f_cos(35, 40, x); - 2
   #ret = f2(x);
 endfunction
 
@@ -348,7 +352,7 @@ function jac = calc_jacobian (theta)
   endfor
 endfunction
 
-q = [0.1; 0.1; 0.1];
+q = [0.1; 0.1];
 [r_vals, theta] = calc_heat();
 
 #xgrid = linspace(0, L, 150);
@@ -387,6 +391,26 @@ endfunction
 
 [B, rhs] = calc_linear_system();
 
+s1 = 0.0;
+s2 = 0.0;
+num_iter = 200;
+s1_hist = zeros(1, num_iter);
+s2_hist = zeros(1, num_iter);
+for it = 1:num_iter
+  qq = B^-1 * ([s1; s2] - rhs);
+  q(1) = qq(1);
+  q(2) = qq(2);
+  q
+  [r_vals, theta] = calc_heat();
+  r_vals
+  s1 += r(1) - r_vals(1);
+  s2 += r(2) - r_vals(2);
+  s1_hist(it) = s1;
+  s2_hist(it) = s2;
+endfor
+
+
+
 
 
 #q1_min = -0.5;
@@ -394,6 +418,8 @@ endfunction
 #q2_min = -0.5;
 #q2_max = 2.5;
 #qn = 6;
+
+
 
 s1_min = 0;
 s1_max = 10;
@@ -406,6 +432,7 @@ s1grid = linspace(s1_min, s1_max, sn);
 s2grid = linspace(s2_min, s2_max, sn);
 func_vals1 = zeros(sn);
 func_vals2 = zeros(sn);
+
 #j_val = 1;
 #q(3) = 0;
 #{
@@ -421,6 +448,7 @@ for q1_ind = 1:qn
   endfor
 endfor
 #}
+
 for s1_ind = 1:sn
   for s2_ind = 1:sn
     s1_val = s1grid(s1_ind);
@@ -440,9 +468,11 @@ endfor
 #contour(q1grid, q2grid, func_vals2, 0:15, 'k', '--', 'ShowText', 'on')
 figure
 #contour(s1grid, s2grid, func_vals1', 0:0.2:15, 'k', 'ShowText', 'on')
-contour(s1grid, s2grid, func_vals1', 'k', 'ShowText', 'on')
+contour(s1grid, s2grid, func_vals1', 0:0.1:15, 'k', 'ShowText', 'on')
 hold on
 #contour(s1grid, s2grid, func_vals2', 0:0.2:15, 'k', '--', 'ShowText', 'on')
-contour(s1grid, s2grid, func_vals2', 'k', '--', 'ShowText', 'on')
+contour(s1grid, s2grid, func_vals2', 0:0.1:15, 'k', '--', 'ShowText', 'on')
 xlabel("s_1")
 ylabel("s_2")
+hold on
+plot(s1_hist, s2_hist, 'k', 'linestyle', '-.', 'linewidth', 2);
