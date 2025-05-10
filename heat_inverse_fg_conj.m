@@ -146,7 +146,7 @@ function [r_vals, theta] = calc_heat ()
 
   data.G = [ Inf, Inf ; Inf, Inf ];
 
-  L1 = [ 25, 5, 20 ];
+  L1 = [ 25, 2, 23 ];
   K1 = [ 40, 20, 40 ];
 
   addpath("joker-fdm/bvp1d");
