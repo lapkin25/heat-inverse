@@ -93,7 +93,6 @@ endfunction
 
 function ret = h1 (x)
   ret = f_cos(20, 25, x);
-  #ret = f_cos(25, 30, x);
   #ret = f_cos(20, 35, x); #- 2
   #ret = f1(x);
 endfunction
@@ -119,18 +118,18 @@ function [r_vals, theta] = calc_heat ()
   global num_sources
 
   data.N = N = 2;  # число уравнений
-  data.M = M = 1;  # число слоев
+  data.M = M = 3;  # число слоев
   data.a(1, 1) = a;
+  data.a(1, 2) = 100;
+  data.a(1, 3) = a;
   data.a(2, 1) = alpha;
+  data.a(2, 2) = 0.0001;
+  data.a(2, 3) = alpha;
 
   fm =  {@(x, p) b*kappa_a*x^4*sign(x),  @(x, p) -b*kappa_a*x;
          @(x, p) -kappa_a*x^4*sign(x), @(x, p) kappa_a*x};
   dfm = {@(x, p) 4*b*kappa_a*abs(x)^3,  @(x, p) -b*kappa_a;
          @(x, p) -kappa_a*4*abs(x)^3, @(x, p) kappa_a};
-#  fm =  {@(x, p) b*kappa_a*abs(x)^5*sign(x),  @(x, p) -b*kappa_a*x;
-#         @(x, p) -kappa_a*abs(x)^5*sign(x), @(x, p) kappa_a*x};
-#  dfm = {@(x, p) 5*b*kappa_a*abs(x)^4,  @(x, p) -b*kappa_a;
-#         @(x, p) -kappa_a*5*abs(x)^4, @(x, p) kappa_a};
 
   data.f = data.df = cell(N, M, N);
   for j = 1 : M
@@ -145,13 +144,18 @@ function [r_vals, theta] = calc_heat ()
   data.b = [ beta, beta ; gamma, gamma ];
   data.w = [ beta * theta_b1, beta * theta_b2 ; gamma * theta_b1 ^ 4, gamma * theta_b2 ^ 4 ];
 
-  data.G = [ ];
+  data.G = [ Inf, Inf ; Inf, Inf ];
+
+  L1 = [ 25, 5, 20 ];
+  K1 = [ 40, 20, 40 ];
 
   addpath("joker-fdm/bvp1d");
-  grid_info = get_grid_info(L, K);
-  xgrid = linspace(0, L, grid_info.nodes);
+  grid_info = get_grid_info(L1, K1);
+  xgrid1 = linspace(0, L1(1), K1(1) + 1);
+  xgrid2 = linspace(L1(1), L1(1) + L1(2), K1(2) + 1);
+  xgrid3 = linspace(L1(1) + L1(2), L1(1) + L1(2) + L1(3), K1(3) + 1);
   data.g = zeros(N, grid_info.nodes);
-  data.g(1, :) = arrayfun(@g_fun, xgrid);
+  data.g(1, :) = arrayfun(@g_fun, [xgrid1 xgrid2 xgrid3]);
   data.g(2, :) = zeros(1, grid_info.nodes);
   for i = 1 : N
     for k = 1 : N
@@ -176,10 +180,14 @@ function [r_vals, theta] = calc_heat ()
   ylabel("phi");
   #}
 
+
+
   r_vals = zeros(num_sources, 1);
   for i = 1:num_sources
     # вычисляем интеграл от f_fun{i} * theta
-    r_vals(i) = trapz(xgrid, arrayfun(h_fun{i}, xgrid) .* theta);
+    r_vals(i) = trapz(xgrid1, arrayfun(h_fun{i}, xgrid1) .* theta(1:K1(1)+1)) ...
+      + trapz(xgrid2, arrayfun(h_fun{i}, xgrid2) .* theta(K1(1)+1+1:K1(1)+K1(2)+2)) ...
+      + trapz(xgrid3, arrayfun(h_fun{i}, xgrid3) .* theta(K1(1)+K1(2)+2+1:K1(1)+K1(2)+K1(3)+3));
   endfor
 endfunction
 
@@ -267,128 +275,9 @@ function [A, rhs] = calc_linear_system ()
   rhs = s_vals;
 endfunction
 
-function u = calc_linearized (theta, ii)
-  global a
-  global b
-  global kappa_a
-  global alpha
-  global beta
-  global gamma
-  global theta_b
-  global L
-  global K
-  global f_fun
-  global num_sources
-
-  data.N = N = 2;  # число уравнений
-  data.M = M = 1;  # число слоев
-  data.a(1, 1) = a;
-  data.a(2, 1) = alpha;
-
-  fm =  {@(x, p) b*kappa_a*4*abs(p)^3*x,  @(x, p) -b*kappa_a*x;
-         @(x, p) -kappa_a*4*abs(p)^3*x, @(x, p) kappa_a*x};
-  dfm = {@(x, p) b*kappa_a*4*abs(p)^3,  @(x, p) -b*kappa_a;
-         @(x, p) -kappa_a*4*abs(p)^3, @(x, p) kappa_a};
-  data.f = data.df = cell(N, M, N);
-  for j = 1 : M
-    for i = 1 : N
-      for k = 1 : N
-        data.f{i, j, k} = fm{i, k};
-        data.df{i, j, k} = dfm{i, k};
-      endfor
-    endfor
-  endfor
-
-  data.b = [ beta, beta ; gamma, gamma ];
-  data.w = [ 0, 0 ; 0, 0 ];
-
-  data.G = [ ];
-
-  addpath("joker-fdm/bvp1d");
-  grid_info = get_grid_info(L, K);
-  xgrid = linspace(0, L, grid_info.nodes);
-  data.g = zeros(N, grid_info.nodes);
-  data.g(1, :) = arrayfun(f_fun{ii}, xgrid);
-  data.g(2, :) = zeros(1, grid_info.nodes);
-  for i = 1 : N
-    for k = 1 : N
-      data.p(i, k, :) = theta(:);
-    endfor
-  endfor
-
-  guess = zeros(N, grid_info.nodes);
-  tol = 1e-4;
-  sol = solve_bvp1d(grid_info, data, guess, tol);
-  u = sol(1, :);
-  z = sol(2, :);
-endfunction
-
-function jac = calc_jacobian_naive (r_vals)
-  global q
-  global num_sources
-  delta_q = 0.0001;  # шаг дифференцирования
-
-  q0 = q;
-  for i = 1:num_sources
-    q = q0;
-    q(i) += delta_q;
-    [new_r_vals, theta] = calc_heat();
-    jac(:, i) = (new_r_vals - r_vals) / delta_q;
-  endfor
-endfunction
-
-function jac = calc_jacobian (theta)
-  global q
-  global num_sources
-  global L
-  global K
-  global f_fun
-
-  xgrid = linspace(0, L, K + 1);
-  for i = 1:num_sources
-    u_i = calc_linearized(theta, i);
-    for j = 1:num_sources
-      jac(j, i) = trapz(xgrid, arrayfun(f_fun{j}, xgrid) .* u_i);
-    endfor
-  endfor
-endfunction
-
 q = [0.1; 0.1];
 [r_vals, theta] = calc_heat();
 
-#xgrid = linspace(0, L, 150);
-#plot(xgrid, arrayfun(@(x) f1(x) + f2(x) + f3(x), xgrid));
-
-#r_vals
-#jac = calc_jacobian_naive(r_vals);
-#jac
-
-#jac = calc_jacobian(theta)
-
-function [y, jac] = opt_f (x)
-  global num_sources
-  global q
-  global r
-  for i = 1:num_sources
-    q(i) = x(i);
-  endfor
-  for i = 1:num_sources
-    printf("%f ", q(i));
-  endfor
-  printf("\n");
-  y = zeros (num_sources, 1);
-  for j = 1:num_sources
-    [r_vals, theta] = calc_heat();
-    for i = 1:num_sources
-      y(i) = r_vals(i) - r(i);
-    endfor
-    if (nargout == 2)
-      jac = calc_jacobian(theta);
-    endif
-  endfor
-endfunction
-
-#[qq, fval, info] = fsolve (@opt_f, q, optimset ("jacobian", "on"))
 
 [B, rhs] = calc_linear_system();
 
