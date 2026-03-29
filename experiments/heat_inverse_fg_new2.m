@@ -636,12 +636,12 @@ func_vals2 = zeros(sn);
 #j_val = 1;
 #q(3) = 0;
 
-#{
+
 q1_min = 0.0;
-q1_max = 5;
+q1_max = 3;
 q2_min = 0.0;
-q2_max = 5;
-qn = 10
+q2_max = 3;
+qn = 8;
 q1grid = linspace(q1_min, q1_max, qn);
 q2grid = linspace(q2_min, q2_max, qn);
 func_vals1 = zeros(qn);
@@ -653,20 +653,23 @@ for q1_ind = 1:qn
     q(1) = q1_val;
     q(2) = q2_val;
     [r_vals, theta] = calc_heat();
-    func_vals1(q1_ind, q2_ind) = r_vals(1);
-    func_vals2(q1_ind, q2_ind) = r_vals(2);
+    func_vals1(q1_ind, q2_ind) = r_vals(1)
+    func_vals2(q1_ind, q2_ind) = r_vals(2)
   endfor
 endfor
 
 figure
-contour(q1grid, q2grid, func_vals1', 0:15, 'k', 'ShowText', 'on')
+contour(q1grid, q2grid, func_vals1', 0:0.1:15, 'k', 'ShowText', 'on')
 hold on
-contour(q1grid, q2grid, func_vals2', 0:15, 'k', '--', 'ShowText', 'on')
-#}
+contour(q1grid, q2grid, func_vals2', 0:0.1:15, 'k', '--', 'ShowText', 'on')
+
 
 func_vals1 = zeros(sn);
 func_vals2 = zeros(sn);
 
+
+
+#{
 for s1_ind = 1:sn
   for s2_ind = 1:sn
     s1_val = s1grid(s1_ind);
@@ -705,7 +708,10 @@ endfor
 
 func_vals1
 func_vals2
+#}
 
+
+#{
 #figure
 #contour(q1grid, q2grid, func_vals1, 0:15, 'k', 'ShowText', 'on')
 #hold on
@@ -718,7 +724,7 @@ hold on
 contour(s1grid, s2grid, func_vals2', 0:0.01:15, 'k', '--', 'ShowText', 'on')
 xlabel("s_1")
 ylabel("s_2")
-
+#}
 #hold on
 #plot(s1_hist, s2_hist, 'k', 'linestyle', '-.', 'linewidth', 2);
 
