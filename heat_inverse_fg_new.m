@@ -20,14 +20,15 @@ a = 0.92;
 b = 18.7;
 kappa_a = 0.01;
 alpha = 3.333333333;
-beta = 0.05; #10;  #0.08; #0.08; #10;
+beta = 0.05;  #10;
 gamma = 0.3;
+#beta = gamma / alpha * a; #0.05;  #0.08; #0.08; #10;
 theta_b1 = 0.4;
 theta_b2 = 0.8;
 L = 50;
 
 # размер расчетной сетки
-K = 70;
+K = 200;
 
 # источники тепла
 global f_fun
@@ -60,7 +61,7 @@ endfunction
 
 function ret = f_cos(a, b, x)
   if (x >= a && x <= b)
-    #ret = 0.5*(1 + cos(2 * pi * (x - (a + b) / 2) / (b - a)));
+  #  ret = 0.5*(1 + cos(2 * pi * (x - (a + b) / 2) / (b - a)));
     if (x < (a + b) / 2)
       ret = (x - a) * 2 / (b - a);
     else
@@ -101,6 +102,7 @@ function ret = h1 (x)
 
 
   ret = f_cos(20, 35, x); #- 2
+  #ret = f_cos(27, 30, x); #- маленький источник!
   #ret = f1(x);
 endfunction
 
@@ -112,6 +114,7 @@ function ret = h2 (x)
 
 
   ret = f_cos(35, 40, x); #- 2
+  #ret = f_cos(37, 40, x); #- маленький источник!
   #ret = f2(x);
 endfunction
 
@@ -189,7 +192,7 @@ function [r_vals, theta] = calc_heat ()
 
   r_vals = zeros(num_sources, 1);
   for i = 1:num_sources
-    # вычисляем интеграл от f_fun{i} * theta
+    # вычисляем интеграл от h_fun{i} * theta
     r_vals(i) = trapz(xgrid, arrayfun(h_fun{i}, xgrid) .* theta);
   endfor
 endfunction
@@ -492,15 +495,25 @@ endfunction
 
 #[qq, fval, info] = fsolve (@opt_f, q, optimset ("jacobian", "on"))
 
+#{
+xgrid = linspace(0, L, 150);
+plot(xgrid, arrayfun(@(x) f1(x), xgrid));
+hold on
+plot(xgrid, arrayfun(@(x) f2(x), xgrid));
+hold on
+plot(xgrid, arrayfun(@(x) h1(x), xgrid));
+hold on
+plot(xgrid, arrayfun(@(x) h2(x), xgrid));
+#}
 
 
-#[B, rhs] = calc_linear_system();
-[B, rhs] = calc_linear_system_2();
+[B, rhs] = calc_linear_system();
+#[B, rhs] = calc_linear_system_2();
 
 # третья система координат
-B = calc_jacobian(theta);
-rhs = [0; 0];
-
+#B = calc_jacobian(theta);
+#rhs = [0; 0];
+#theta
 
 
 #{
@@ -539,11 +552,11 @@ endfor
 
 
 
-s1_min = 0;
-s1_max = 2;
-s2_min = 0;
-s2_max = 2;
-sn = 7;
+s1_min = 5;
+s1_max = 15;
+s2_min = 5;
+s2_max = 10;
+sn = 8;
 #q1grid = linspace(q1_min, q1_max, qn);
 #q2grid = linspace(q2_min, q2_max, qn);
 s1grid = linspace(s1_min, s1_max, sn);
@@ -553,7 +566,19 @@ func_vals2 = zeros(sn);
 
 #j_val = 1;
 #q(3) = 0;
-#{
+
+
+q1_min = 0.0;
+q1_max = 3;
+q2_min = 0.0;
+q2_max = 3;
+qn = 12;
+q1grid = linspace(q1_min, q1_max, qn);
+q2grid = linspace(q2_min, q2_max, qn);
+func_vals1 = zeros(qn);
+func_vals2 = zeros(qn);
+angle1 = zeros(qn);
+angle2 = zeros(qn);
 for q1_ind = 1:qn
   for q2_ind = 1:qn
     q1_val = q1grid(q1_ind);
@@ -561,11 +586,25 @@ for q1_ind = 1:qn
     q(1) = q1_val;
     q(2) = q2_val;
     [r_vals, theta] = calc_heat();
-    func_vals1(q1_ind, q2_ind) = r_vals(1);
-    func_vals2(q1_ind, q2_ind) = r_vals(2);
+    #func_vals1(q1_ind, q2_ind) = r_vals(1);
+    #func_vals2(q1_ind, q2_ind) = r_vals(2);
+    #Mat = calc_jacobian(theta);
+    Mat = calc_jacobian_naive(r_vals);
+    angle1(q1_ind, q2_ind) = atan2(Mat(1, 2), Mat(1, 1));
+    angle2(q1_ind, q2_ind) = atan2(Mat(2, 2), Mat(2, 1));
   endfor
 endfor
-#}
+
+figure
+contour(q1grid, q2grid, angle1', 0:0.005:5, 'k', 'ShowText', 'on')
+hold on
+contour(q1grid, q2grid, angle2', 0:0.005:5, 'k', '--', 'ShowText', 'on')
+
+
+func_vals1 = zeros(sn);
+func_vals2 = zeros(sn);
+angle1 = zeros(sn);
+angle2 = zeros(sn);
 
 for s1_ind = 1:sn
   for s2_ind = 1:sn
@@ -575,18 +614,31 @@ for s1_ind = 1:sn
     q_val = B^-1 * (s_val - rhs);
     q(1) = q_val(1);
     q(2) = q_val(2);
+    q
     [r_vals, theta] = calc_heat();
     func_vals1(s1_ind, s2_ind) = r_vals(1);
     func_vals2(s1_ind, s2_ind) = r_vals(2);
     theta_positive = true;
     for i = 1:length(theta)
-      if (theta(i) < 0)
+      if (theta(i) < 1e-6)
         theta_positive = false;
       endif
     endfor
-    if (!theta_positive)
+    if (!theta_positive) #(q(1) < 0 || q(2) < 0)
+      #theta
+
+      #xgrid = linspace(0, L, K + 1);
+      #figure
+      #plot(xgrid, theta);
+
       func_vals1(s1_ind, s2_ind) = NaN;
       func_vals2(s1_ind, s2_ind) = NaN;
+      angle1(s1_ind, s2_ind) = NaN;
+      angle2(s1_ind, s2_ind) = NaN;
+    #else
+    #  Mat = calc_jacobian(theta);
+    #  angle1(s1_ind, s2_ind) = atan2(Mat(1, 2), Mat(1, 1));
+    #  angle2(s1_ind, s2_ind) = atan2(Mat(2, 2), Mat(2, 1));
     endif
     #if (q(1) < 0 || q(2) < 0)
     #  q
@@ -599,16 +651,19 @@ endfor
 func_vals1
 func_vals2
 
+angle1
+angle2
+
 #figure
 #contour(q1grid, q2grid, func_vals1, 0:15, 'k', 'ShowText', 'on')
 #hold on
 #contour(q1grid, q2grid, func_vals2, 0:15, 'k', '--', 'ShowText', 'on')
 figure
 #contour(s1grid, s2grid, func_vals1', 0:0.2:15, 'k', 'ShowText', 'on')
-contour(s1grid, s2grid, func_vals1', 0:0.1:15, 'k', 'ShowText', 'on')
+contour(s1grid, s2grid, func_vals1', 0:0.05:15, 'k', 'ShowText', 'on')
 hold on
 #contour(s1grid, s2grid, func_vals2', 0:0.2:15, 'k', '--', 'ShowText', 'on')
-contour(s1grid, s2grid, func_vals2', 0:0.1:15, 'k', '--', 'ShowText', 'on')
+contour(s1grid, s2grid, func_vals2', 0:0.05:15, 'k', '--', 'ShowText', 'on')
 xlabel("s_1")
 ylabel("s_2")
 
