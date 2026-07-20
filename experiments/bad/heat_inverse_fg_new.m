@@ -21,9 +21,9 @@ b = 18.7;
 kappa_a = 0.01;
 alpha = 3.333333333;
 #beta = 10;  # 0.05;
-beta = 0.05;
+#beta = 0.05;
 gamma = 0.3;
-#beta = gamma / alpha * a; #0.05;  #0.08; #0.08; #10;
+beta = gamma / alpha * a; #0.05;  #0.08; #0.08; #10;
 theta_b1 = 0.4;
 theta_b2 = 0.8;
 L = 50;
@@ -580,11 +580,11 @@ endfor
 
 
 
-s1_min = 0;
-s1_max = 50;
-s2_min = 0;
-s2_max = 30;
-sn = 7;
+s1_min = 50;
+s1_max = 2000;
+s2_min = 50;
+s2_max = 1000;
+sn = 25;
 #q1grid = linspace(q1_min, q1_max, qn);
 #q2grid = linspace(q2_min, q2_max, qn);
 s1grid = linspace(s1_min, s1_max, sn);
@@ -669,16 +669,30 @@ for s1_ind = 1:sn
     q_val = B^-1 * (s_val - rhs);
     q(1) = q_val(1);
     q(2) = q_val(2);
-    q
-    [r_vals, theta] = calc_heat();
-    func_vals1(s1_ind, s2_ind) = r_vals(1);
-    func_vals2(s1_ind, s2_ind) = r_vals(2);
-    theta_positive = true;
-    for i = 1:length(theta)
-      if (theta(i) < 1e-6)
-        theta_positive = false;
-      endif
-    endfor
+
+    if (q(1) >= 0 && q(2) >= 0)
+      q
+      [r_vals, theta] = calc_heat();
+      func_vals1(s1_ind, s2_ind) = r_vals(1);
+      func_vals2(s1_ind, s2_ind) = r_vals(2);
+      theta_positive = true;
+      for i = 1:length(theta)
+        if (theta(i) < 1e-6)
+          theta_positive = false;
+        endif
+      endfor
+
+      #Mat = calc_jacobian(theta);
+      #angle1(s1_ind, s2_ind) = atan2(Mat(1, 2), Mat(1, 1));
+      #angle2(s1_ind, s2_ind) = atan2(Mat(2, 2), Mat(2, 1));
+    else
+      func_vals1(s1_ind, s2_ind) = NaN;
+      func_vals2(s1_ind, s2_ind) = NaN;
+      angle1(s1_ind, s2_ind) = NaN;
+      angle2(s1_ind, s2_ind) = NaN;
+    endif
+
+    #{
     #if (q(1) < 0 || q(2) < 0)
     if (!theta_positive) #(q(1) < 0 || q(2) < 0)
       #theta
@@ -696,6 +710,8 @@ for s1_ind = 1:sn
     #  angle1(s1_ind, s2_ind) = atan2(Mat(1, 2), Mat(1, 1));
     #  angle2(s1_ind, s2_ind) = atan2(Mat(2, 2), Mat(2, 1));
     endif
+    #}
+
     #if (q(1) < 0 || q(2) < 0)
     #  q
     #  func_vals1(s1_ind, s2_ind) = NaN;
