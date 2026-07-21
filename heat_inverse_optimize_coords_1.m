@@ -435,7 +435,7 @@ q = [0; 0];
 [B, rhs] = calc_linear_system_2();  # система координат с уменьшенным beta
 
 global c
-c = 100;
+c = 100;  # TODO: увеличить до 10000 и выше
 
 s_init = [B(1, 1), B(1, 2), B(2, 1), B(2, 2)];
 
@@ -469,6 +469,8 @@ function y = opt_f (s_coef)
       q = [q1_val; q2_val]
       [r_vals, theta] = calc_heat();
       M = calc_jacobian(theta);
+      # TODO: предрассчитать якобиан во всех узлах коллокации, чтобы не повторять расчет
+      # TODO: сгенерировать узлы коллокации с помощью Latin Hypercube Sampling
       grad_F1 = M(1, :)';
       grad_F2 = M(2, :)';
       dF1_dsk = S^-1 * grad_F1;
@@ -574,4 +576,3 @@ for q1_ind = 1:qn
 endfor
 
 y = sum * det(opt_S)
-
