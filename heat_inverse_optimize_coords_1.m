@@ -467,13 +467,12 @@ function y = opt_f (s_coef)
       q1_val = q1grid(q1_ind);
       q2_val = q2grid(q2_ind);
       q = [q1_val; q2_val]
-      [r_vals, theta] = calc_heat()
-      M = calc_jacobian(theta)
+      [r_vals, theta] = calc_heat();
+      M = calc_jacobian(theta);
       grad_F1 = M(1, :)';
       grad_F2 = M(2, :)';
       dF1_dsk = S^-1 * grad_F1;
       dF2_dsk = S^-1 * grad_F2;
-      q
       dF1_ds2 = dF1_dsk(2)
       dF2_ds1 = dF2_dsk(1)
       sum += p_c(dF1_ds2) + p_c(dF2_ds1);
