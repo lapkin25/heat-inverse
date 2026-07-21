@@ -471,8 +471,8 @@ function y = opt_f_slow (s_coef)
       # TODO: сгенерировать узлы коллокации с помощью Latin Hypercube Sampling
       grad_F1 = M(1, :)';
       grad_F2 = M(2, :)';
-      dF1_dsk = S^-1 * grad_F1;
-      dF2_dsk = S^-1 * grad_F2;
+      dF1_dsk = (S')^-1 * grad_F1;
+      dF2_dsk = (S')^-1 * grad_F2;
       dF1_ds2 = dF1_dsk(2)
       dF2_ds1 = dF2_dsk(1)
       sum += p_c(dF1_ds2) + p_c(dF2_ds1);
@@ -501,8 +501,8 @@ function y = opt_f(s_coef)
   for i = 1:collocation_nodes_num
     grad_F1 = grad_F1_collocation(i, :)';
     grad_F2 = grad_F2_collocation(i, :)';
-    dF1_dsk = S^-1 * grad_F1;
-    dF2_dsk = S^-1 * grad_F2;
+    dF1_dsk = (S')^-1 * grad_F1;
+    dF2_dsk = (S')^-1 * grad_F2;
     dF1_ds2 = dF1_dsk(2);
     dF2_ds1 = dF2_dsk(1);
     sum += p_c(dF1_ds2) + p_c(dF2_ds1);
@@ -522,7 +522,7 @@ global collocation_nodes_num
 collocation_nodes_num = qn * qn;
 collocation_nodes = zeros(collocation_nodes_num, 2);
 
-q_max = 0.5;
+q_max = 1.0;
 q1grid = linspace(0, q_max, qn);
 q2grid = linspace(0, q_max, qn);
 cnt = 0;
@@ -559,13 +559,13 @@ endfor
 opt_S = [s_coef(1), s_coef(2); s_coef(3), s_coef(4)]
 
 
-# Построение графика...
 
-s1_min = 150;
+# Построение графика...
+s1_min = 250;
 s1_max = 1000;
-s2_min = 150;
-s2_max = 1000;
-sn = 5;
+s2_min = 100;
+s2_max = 500;
+sn = 10;
 s1grid = linspace(s1_min, s1_max, sn);
 s2grid = linspace(s2_min, s2_max, sn);
 func_vals1 = zeros(sn);
@@ -621,13 +621,19 @@ for i = 1:collocation_nodes_num
   q = [q1_val; q2_val]
   grad_F1 = grad_F1_collocation(i, :)';
   grad_F2 = grad_F2_collocation(i, :)';
-  dF1_dsk = opt_S^-1 * grad_F1;
-  dF2_dsk = opt_S^-1 * grad_F2;
+  dF1_dsk = (opt_S')^-1 * grad_F1;
+  dF2_dsk = (opt_S')^-1 * grad_F2;
   dF1_ds1 = dF1_dsk(1)
   dF1_ds2 = dF1_dsk(2)
   dF2_ds1 = dF2_dsk(1)
   dF2_ds2 = dF2_dsk(2)
   sum += p_c(dF1_ds2) + p_c(dF2_ds1);
+
+  angle1 = atan2(grad_F1(2), grad_F1(1))
+  angle2 = atan2(grad_F2(2), grad_F2(1))
 endfor
 y = sum * det(opt_S)
+
+opt_S_angle1 = atan2(opt_S(1, 2), opt_S(1, 1))
+opt_S_angle2 = atan2(opt_S(2, 2), opt_S(2, 1))
 
