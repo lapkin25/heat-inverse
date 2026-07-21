@@ -434,13 +434,11 @@ q = [0; 0];
 
 [B, rhs] = calc_linear_system_2();  # система координат с уменьшенным beta
 
-global c
-c = 100;  # TODO: увеличить до 10000 и выше
-
+# начальное приближение для оптимальной системы координат
 s_init = [B(1, 1), B(1, 2), B(2, 1), B(2, 2)];
 
 function p = p_c(y)
-  global c
+  c = 100;  # TODO: увеличить до 10000 и выше
   if (y <= 0)
     p = y ^ 2;
   else
@@ -448,7 +446,7 @@ function p = p_c(y)
   endif
 endfunction
 
-function y = opt_f (s_coef)
+function y = opt_f_slow (s_coef)
   global q
 
   S = zeros(2);
@@ -488,14 +486,82 @@ function y = opt_f (s_coef)
 endfunction
 
 
+function y = opt_f(s_coef)
+  global collocation_nodes_num
+  global grad_F1_collocation
+  global grad_F2_collocation
+
+  S = zeros(2);
+  S(1, 1) = s_coef(1);
+  S(1, 2) = s_coef(2);
+  S(2, 1) = s_coef(3);
+  S(2, 2) = s_coef(4);
+
+  sum = 0.0;
+  for i = 1:collocation_nodes_num
+    grad_F1 = grad_F1_collocation(i, :)';
+    grad_F2 = grad_F2_collocation(i, :)';
+    dF1_dsk = S^-1 * grad_F1;
+    dF2_dsk = S^-1 * grad_F2;
+    dF1_ds2 = dF1_dsk(2);
+    dF2_ds1 = dF2_dsk(1);
+    sum += p_c(dF1_ds2) + p_c(dF2_ds1);
+  endfor
+
+  y = sum * det(S);
+
+  S
+  y
+endfunction
+
+
+# узлы коллокации
+# в каждом столбце матрицы collocation_nodes координаты узла
+qn = 3;
+global collocation_nodes_num
+collocation_nodes_num = qn * qn;
+collocation_nodes = zeros(collocation_nodes_num, 2);
+
+q_max = 3;
+q1grid = linspace(0, q_max, qn);
+q2grid = linspace(0, q_max, qn);
+cnt = 0;
+for q1_ind = 1:qn
+  for q2_ind = 1:qn
+    q1_val = q1grid(q1_ind);
+    q2_val = q2grid(q2_ind);
+    cnt += 1;
+    collocation_nodes(cnt, :) = [q1_val, q2_val];
+  endfor
+endfor
+
+# расчет градиента в узлах коллокации...
+global grad_F1_collocation
+global grad_F2_collocation
+grad_F1_collocation = zeros(collocation_nodes_num, 2);
+grad_F2_collocation = zeros(collocation_nodes_num, 2);
+
+for i = 1:collocation_nodes_num
+  i
+  q1_val = collocation_nodes(i, 1);
+  q2_val = collocation_nodes(i, 2);
+  q = [q1_val; q2_val]
+  [r_vals, theta] = calc_heat();
+  Mat = calc_jacobian(theta);
+  grad_F1_collocation(i, :) = Mat(1, :);
+  grad_F2_collocation(i, :) = Mat(2, :);
+endfor
+
+
 # раскомментировать для запуска оптимизации
 
 [s_coef, fval, info] = fsolve(@opt_f, s_init)
 opt_S = [s_coef(1), s_coef(2); s_coef(3), s_coef(4)]
 
 
-
-#opt_S = [329.72   117.48;   293.61   592.62];
+#opt_S = [318.84   118.85
+#   299.16   598.94];
+# y = 0.068241
 
 
 # Построение графика...
@@ -550,29 +616,20 @@ ylabel("s_2")
 
 
 
-
 # вывести якобиан и значения производных dF1/ds2, dF2/ds1 во всех узлах коллокации
 
 sum = 0.0;
-qn = 3;
-q_max = 3;
-q1grid = linspace(0, q_max, qn);
-q2grid = linspace(0, q_max, qn);
-for q1_ind = 1:qn
-  for q2_ind = 1:qn
-    q1_val = q1grid(q1_ind);
-    q2_val = q2grid(q2_ind);
-    q = [q1_val; q2_val]
-    [r_vals, theta] = calc_heat();
-    M = calc_jacobian(theta);
-    grad_F1 = M(1, :)';
-    grad_F2 = M(2, :)';
-    dF1_dsk = opt_S^-1 * grad_F1;
-    dF2_dsk = opt_S^-1 * grad_F2;
-    dF1_ds2 = dF1_dsk(2)
-    dF2_ds1 = dF2_dsk(1)
-    sum += p_c(dF1_ds2) + p_c(dF2_ds1);
-  endfor
+for i = 1:collocation_nodes_num
+  q1_val = collocation_nodes(i, 1);
+  q2_val = collocation_nodes(i, 2);
+  q = [q1_val; q2_val]
+  grad_F1 = grad_F1_collocation(i, :)';
+  grad_F2 = grad_F2_collocation(i, :)';
+  dF1_dsk = opt_S^-1 * grad_F1;
+  dF2_dsk = opt_S^-1 * grad_F2;
+  dF1_ds2 = dF1_dsk(2)
+  dF2_ds1 = dF2_dsk(1)
+  sum += p_c(dF1_ds2) + p_c(dF2_ds1);
 endfor
-
 y = sum * det(opt_S)
+
