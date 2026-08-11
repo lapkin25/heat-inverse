@@ -438,7 +438,7 @@ q = [0; 0];
 s_init = [B(1, 1), B(1, 2), B(2, 1), B(2, 2)];
 
 function p = p_c(y)
-  c = 100000;
+  c = 1000;
   if (y <= 0)
     p = y ^ 2;
   else
@@ -517,12 +517,12 @@ endfunction
 
 # узлы коллокации
 # в каждом столбце матрицы collocation_nodes координаты узла
-qn = 3;
+qn = 5;
 global collocation_nodes_num
 collocation_nodes_num = qn * qn;
 collocation_nodes = zeros(collocation_nodes_num, 2);
 
-q_max = 1.0;
+q_max = 2.0;
 q1grid = linspace(0, q_max, qn);
 q2grid = linspace(0, q_max, qn);
 cnt = 0;
@@ -555,7 +555,7 @@ endfor
 
 # раскомментировать для запуска оптимизации
 
-[s_coef, fval, info] = fsolve(@opt_f, s_init)
+[s_coef, fval, info] = fsolve(@opt_f, s_init, optimset ("MaxIter", 1000000))
 opt_S = [s_coef(1), s_coef(2); s_coef(3), s_coef(4)]
 
 
@@ -564,7 +564,7 @@ opt_S = [s_coef(1), s_coef(2); s_coef(3), s_coef(4)]
 s1_min = 250;
 s1_max = 1000;
 s2_min = 100;
-s2_max = 500;
+s2_max = 400;
 sn = 10;
 s1grid = linspace(s1_min, s1_max, sn);
 s2grid = linspace(s2_min, s2_max, sn);
