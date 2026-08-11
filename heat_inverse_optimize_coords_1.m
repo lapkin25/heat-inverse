@@ -20,10 +20,10 @@ a = 0.92;
 b = 18.7;
 kappa_a = 0.01;
 alpha = 3.333333333;
-#beta = 10;  # 0.05;
+beta = 10;  # 0.05;
 #beta = 0.05;
 gamma = 0.3;
-beta = gamma / alpha * a; #0.05;  #0.08; #0.08; #10;
+#beta = gamma / alpha * a; #0.05;  #0.08; #0.08; #10;
 theta_b1 = 0.4;
 theta_b2 = 0.8;
 L = 50;
@@ -112,10 +112,6 @@ function [r_vals, theta] = calc_heat ()
          @(x, p) -kappa_a*x^4*sign(x), @(x, p) kappa_a*x};
   dfm = {@(x, p) 4*b*kappa_a*abs(x)^3,  @(x, p) -b*kappa_a;
          @(x, p) -kappa_a*4*abs(x)^3, @(x, p) kappa_a};
-#  fm =  {@(x, p) b*kappa_a*abs(x)^5*sign(x),  @(x, p) -b*kappa_a*x;
-#         @(x, p) -kappa_a*abs(x)^5*sign(x), @(x, p) kappa_a*x};
-#  dfm = {@(x, p) 5*b*kappa_a*abs(x)^4,  @(x, p) -b*kappa_a;
-#         @(x, p) -kappa_a*5*abs(x)^4, @(x, p) kappa_a};
 
   data.f = data.df = cell(N, M, N);
   for j = 1 : M
@@ -555,17 +551,17 @@ endfor
 
 # раскомментировать для запуска оптимизации
 
-[s_coef, fval, info] = fsolve(@opt_f, s_init, optimset ("MaxIter", 1000000))
+[s_coef, fval, info] = fsolve(@opt_f, s_init, optimset ("MaxIter", 1000000, "MaxFunEvals", 10000000))
 opt_S = [s_coef(1), s_coef(2); s_coef(3), s_coef(4)]
 
 
 
 # Построение графика...
-s1_min = 250;
-s1_max = 1000;
-s2_min = 100;
-s2_max = 400;
-sn = 16;
+s1_min = 100;
+s1_max = 800;
+s2_min = 0;
+s2_max = 300;
+sn = 20;
 s1grid = linspace(s1_min, s1_max, sn);
 s2grid = linspace(s2_min, s2_max, sn);
 func_vals1 = zeros(sn);
@@ -617,13 +613,14 @@ for i = 1:collocation_nodes_num
 endfor
 
 figure
-contour(s1grid, s2grid, func_vals1', 0:0.05:15, 'k', 'ShowText', 'on')
+contour(s1grid, s2grid, func_vals1', 0:0.1:15, 'k', 'ShowText', 'on')
 hold on
-contour(s1grid, s2grid, func_vals2', 0:0.05:15, 'k', '--', 'ShowText', 'on')
+contour(s1grid, s2grid, func_vals2', 0:0.1:15, 'k', '--', 'ShowText', 'on')
 xlabel("s_1")
 ylabel("s_2")
 hold on
 scatter(collocation_s1, collocation_s2, 'k', 'filled')
+pbaspect([1 1 1])
 
 
 
