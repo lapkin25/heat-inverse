@@ -565,7 +565,7 @@ s1_min = 250;
 s1_max = 1000;
 s2_min = 100;
 s2_max = 400;
-sn = 10;
+sn = 16;
 s1grid = linspace(s1_min, s1_max, sn);
 s2grid = linspace(s2_min, s2_max, sn);
 func_vals1 = zeros(sn);
@@ -603,12 +603,27 @@ for s1_ind = 1:sn
   endfor
 endfor
 
+# расчет узлов коллокации в новой системе координат
+collocation_s1 = zeros(collocation_nodes_num, 1);
+collocation_s2 = zeros(collocation_nodes_num, 1);
+for i = 1:collocation_nodes_num
+  q1_val = collocation_nodes(i, 1);
+  q2_val = collocation_nodes(i, 2);
+  s_val = opt_S * [q1_val; q2_val];
+  s1_val = s_val(1);
+  s2_val = s_val(2);
+  collocation_s1(i) = s1_val;
+  collocation_s2(i) = s2_val;
+endfor
+
 figure
 contour(s1grid, s2grid, func_vals1', 0:0.05:15, 'k', 'ShowText', 'on')
 hold on
 contour(s1grid, s2grid, func_vals2', 0:0.05:15, 'k', '--', 'ShowText', 'on')
 xlabel("s_1")
 ylabel("s_2")
+hold on
+scatter(collocation_s1, collocation_s2, 'k', 'filled')
 
 
 
