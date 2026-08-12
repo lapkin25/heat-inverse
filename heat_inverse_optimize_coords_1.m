@@ -504,9 +504,10 @@ function y = opt_f(s_coef)
     sum += p_c(dF1_ds2) + p_c(dF2_ds1);
   endfor
 
-  y = sum * det(S);
+  y = sum * (det(S)); #^ 2;
 
   S
+  det(S)
   y
 endfunction
 
@@ -551,7 +552,7 @@ endfor
 
 # раскомментировать для запуска оптимизации
 
-[s_coef, fval, info] = fsolve(@opt_f, s_init, optimset ("MaxIter", 1000000, "MaxFunEvals", 10000000))
+[s_coef, fval, info] = fsolve(@opt_f, s_init, optimset ("MaxIter", 1000, "MaxFunEvals", 10000))
 opt_S = [s_coef(1), s_coef(2); s_coef(3), s_coef(4)]
 
 
