@@ -504,7 +504,8 @@ function y = opt_f(s_coef)
     sum += p_c(dF1_ds2) + p_c(dF2_ds1);
   endfor
 
-  y = sum * (det(S)); #^ 2;
+  #y = sum * (det(S)); #^ 2;
+  y = sum * norm(S, 'fro') ^ 2;
 
   S
   det(S)
